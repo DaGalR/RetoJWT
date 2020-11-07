@@ -1,7 +1,7 @@
 const jwt = require("jsonwebtoken");
 const config = require("../config");
 const { mongoClient } = require("../lib/mongodb");
-
+const bcrypt = require("bcrypt");
 const bd = "jwtEjercicio";
 const userColl = "usuarios";
 
@@ -21,7 +21,10 @@ class HandlerGenerator {
           .status(403)
           .send({ success: false, message: "Usuario o clave incorrectos" });
       }
-      if (username === usuario.usuario && password === usuario.clave) {
+      const compClave = await bcrypt.compare(password, usuario.clave);
+      //let compClave = true;
+      console.log(compClave);
+      if (username === usuario.usuario && compClave) {
         let token = jwt.sign(
           { username: usuario.usuario, rol: usuario.rol },
           config.secret,
@@ -30,19 +33,19 @@ class HandlerGenerator {
           }
         );
 
-        res.json({
+        res.send({
           success: true,
           message: "Authentication successful!",
           token: token,
         });
       } else {
-        res.send(403).json({
+        res.status(403).send({
           success: false,
           message: "Incorrect username or password",
         });
       }
     } else {
-      res.send(400).json({
+      res.status(400).send({
         success: false,
         message: "Authentication failed! Please check the request",
       });
